@@ -1,172 +1,114 @@
-# IntelliClaim - Advanced AI-Powered Insurance Claims Processing
+# IntelliClaim - AI-Powered Insurance Claims Processing
 
 ## 🎯 Project Overview
 
-IntelliClaim is a next-generation AI-powered document processing system designed for insurance claims adjudication. It uses advanced RAG (Retrieval-Augmented Generation) technology with **dual LLM support** - Google's Gemini AI and optional local Mistral-7B inference - to provide intelligent, explainable decisions on insurance claims.
+IntelliClaim is a next-generation AI-powered document processing system designed for insurance claims adjudication. It uses advanced RAG (Retrieval-Augmented Generation) technology with Google's Gemini AI to provide intelligent, explainable decisions on insurance claims.
 
 ## ✨ Key Features
 
-- **🔄 Dual LLM Architecture**: Gemini AI + Optional Local Mistral-7B (4-bit quantized)
-- **🎯 Hybrid Retrieval System**: FAISS + Keyword matching with clause biasing
-- **📄 Multi-Format Support**: PDF and DOCX document processing
-- **🧠 Intelligent Context Building**: Dynamic chunking and relevance scoring
-- **⚡ Optimized Processing**: Async batching with intelligent timeouts
-- **🔍 Clause-Aware Retrieval**: Insurance-specific keyword biasing
+- **🤖 Gemini AI Integration**: Powered by Google's Gemini 1.5 Pro for intelligent reasoning
+- **📄 Multi-Format Support**: PDF, DOCX, and email document processing
+- **🧠 Multi-Agent RAG Pipeline**: Specialized agents for query understanding, retrieval, and decision making
+- **🎯 Clause-Aware Retrieval**: Insurance-specific keyword biasing and context windowing
+- **⚡ Async Processing**: Efficient document processing with intelligent chunking
 - **📊 Real-time Analytics**: Processing metrics and success rates
 - **🛡️ Production Ready**: Robust error handling and fallback mechanisms
+- **🔍 Intelligent Context Building**: Dynamic chunking with relevance scoring
 
 ## 🚀 Current Status
 
-✅ **Backend**: Fully functional with Gemini AI + Local LLM support  
+✅ **Backend**: Fully functional with Gemini AI integration  
 ✅ **Frontend**: Modern React UI with Tailwind CSS  
-✅ **RAG Pipeline**: Hybrid retrieval with clause biasing  
-✅ **Document Processing**: PDF/DOCX with intelligent chunking  
-✅ **API Endpoints**: Complete REST API with `/api/v1/hackrx/run`  
-✅ **Local Inference**: Optional Mistral-7B 4-bit quantized model  
-✅ **Vector Storage**: FAISS with intelligent caching  
+✅ **RAG Pipeline**: Multi-agent system with specialized agents  
+✅ **Document Processing**: PDF/DOCX/Email with intelligent chunking  
+✅ **API Endpoints**: Complete REST API with health checks  
+✅ **Vector Storage**: ChromaDB with BGE-M3 embeddings  
 ✅ **Error Handling**: Comprehensive fallbacks and retry logic  
+✅ **Configuration**: Environment-driven config system  
 
 ## 🆕 Latest Updates
 
-### **Hybrid Retrieval System**
-- **FAISS Vector Search**: Semantic similarity with dynamic k-selection
-- **Keyword Matching**: Term-based retrieval for specific clauses
+### **Enhanced Document Processing**
+- **Multi-Format Support**: PDF, DOCX, and email documents
+- **Intelligent Chunking**: Dynamic chunk size based on document length
+- **Content Hashing**: Persistent caching with document hash-based keys
+- **Idempotent Ingestion**: Skip re-indexing of duplicate documents
+
+### **Advanced Retrieval System**
 - **Clause Biasing**: Insurance-specific keyword prioritization
 - **Context Windowing**: Intelligent excerpt selection around query terms
+- **Hybrid Scoring**: Combines semantic similarity with keyword matching
+- **Retrieval Caching**: Performance optimization for repeated queries
 
-### **Local LLM Support**
-- **Mistral-7B-Instruct**: 4-bit quantized for efficiency
-- **Automatic Fallback**: Seamless switch to Gemini if local model unavailable
-- **Environment Toggle**: `USE_LOCAL_LLM=1` to enable local inference
-- **Memory Efficient**: Optimized for consumer hardware
-
-### **Enhanced Processing**
-- **Async Batching**: Parallel question processing with semaphore control
-- **Dynamic Timeouts**: Intelligent timeout based on question complexity
-- **Robust Parsing**: JSON array extraction with multiple fallback strategies
-- **Memory Management**: Efficient document processing and cleanup
-
-### 🔧 **Short-term Improvements (Next 2 Weeks)**
-
-#### Backend Enhancements
-- [ ] **Caching System**: Implement Redis for query caching
-- [ ] **Rate Limiting**: Add API rate limiting for production
-- [ ] **Enhanced Logging**: Structured logging with correlation IDs
-- [ ] **Error Handling**: Comprehensive error handling and recovery
-- [ ] **Performance Monitoring**: Add metrics and monitoring endpoints
-
-#### Frontend Improvements
-- [ ] **Real-time Updates**: WebSocket integration for live status
-- [ ] **Advanced Search**: Document search and filtering
-- [ ] **Export Features**: Export decisions and reports
-- [ ] **User Authentication**: Basic auth system
-- [ ] **Responsive Design**: Mobile-optimized interface
-
-#### AI Model Improvements
-- [ ] **Fine-tuning**: Custom model training for insurance domain
-- [ ] **Multi-language Support**: Support for multiple languages
-- [ ] **Confidence Calibration**: Improve confidence score accuracy
-- [ ] **Decision Validation**: Cross-validation of AI decisions
-
-### 🚀 **Medium-term Goals (Next Month)**
-
-#### Advanced Features
-- [ ] **Multi-modal Processing**: Image and text document support
-- [ ] **Batch Processing**: Handle multiple claims simultaneously
-- [ ] **Integration APIs**: Connect with external insurance systems
-- [ ] **Audit Dashboard**: Comprehensive audit and compliance features
-- [ ] **Machine Learning Pipeline**: Continuous model improvement
-
-#### Production Readiness
-- [ ] **Docker Deployment**: Containerized application
-- [ ] **CI/CD Pipeline**: Automated testing and deployment
-- [ ] **Monitoring Stack**: Prometheus, Grafana integration
-- [ ] **Security Hardening**: Production security measures
-- [ ] **Backup Strategy**: Data backup and recovery
-
-### 🎯 **Long-term Vision (Next Quarter)**
-
-#### Enterprise Features
-- [ ] **Multi-tenant Architecture**: Support multiple insurance companies
-- [ ] **Advanced Analytics**: Business intelligence dashboard
-- [ ] **Compliance Framework**: Regulatory compliance features
-- [ ] **API Marketplace**: Third-party integrations
-- [ ] **Mobile App**: Native mobile application
-
-#### AI Advancements
-- [ ] **Custom LLM Training**: Domain-specific model training
-- [ ] **Predictive Analytics**: Claim outcome prediction
-- [ ] **Fraud Detection**: AI-powered fraud detection
-- [ ] **Risk Assessment**: Automated risk scoring
-- [ ] **Natural Language Generation**: Automated report generation
+### **Production Features**
+- **Configuration Management**: Environment-driven settings
+- **Background Processing**: Async document ingestion
+- **URL Upload Support**: Direct document URL processing
+- **Comprehensive Logging**: Debug and production logging levels
 
 ## 🛠️ Technical Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │   AI Services   │
-│   (React)       │◄──►│   (FastAPI)     │◄──►│   Gemini/Local  │
+│   (React)       │◄──►│   (FastAPI)     │◄──►│   (Gemini)      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                               │
                               ▼
                        ┌─────────────────┐
                        │   Vector Store  │
-                       │   (FAISS)       │
+                       │   (ChromaDB)    │
                        └─────────────────┘
                               │
                               ▼
                        ┌─────────────────┐
-                       │   Hybrid        │
-                       │   Retrieval     │
+                       │   Multi-Agent   │
+                       │   RAG Pipeline  │
                        └─────────────────┘
 ```
 
 ## 📊 Performance Metrics
 
-- **Query Processing**: < 3 seconds average (local LLM), < 5 seconds (Gemini)
+- **Query Processing**: < 5 seconds average
 - **Document Upload**: < 30 seconds for 10MB PDF
 - **Vector Indexing**: < 10 seconds for 100-page documents
-- **Decision Accuracy**: > 90% confidence threshold
+- **Decision Accuracy**: > 85% confidence threshold
 - **System Uptime**: 99.9% availability target
-- **Memory Usage**: < 4GB for local LLM, < 2GB for Gemini-only
+- **Memory Usage**: < 2GB for Gemini-only setup
 
 ## 🔍 Advanced Features
 
 ### **Clause Biasing System**
 The system automatically detects insurance-specific terms and biases retrieval:
-- **Grace Period**: Premium payment grace periods
-- **Waiting Period**: Pre-existing condition exclusions
+- **Waiting Period**: Initial waiting and cooling periods
+- **Pre-existing Conditions**: PED and pre-existing condition exclusions
 - **Maternity**: Pregnancy and childbirth coverage
 - **Cataract**: Eye surgery specifics
+- **Organ Donor**: Donor expense coverage
+- **No Claim Discount**: NCD calculations
+- **Preventive Care**: Health check coverage
+- **Hospital Coverage**: Inpatient treatment
+- **AYUSH**: Alternative medicine coverage
 - **Room Rent**: ICU and accommodation limits
-- **NCD**: No claim discount calculations
 
-### **Hybrid Retrieval Algorithm**
-1. **Semantic Search**: FAISS similarity with dynamic k-selection
-2. **Keyword Matching**: Term frequency analysis
-3. **Clause Biasing**: Insurance domain prioritization
-4. **Context Windowing**: Intelligent excerpt selection
-5. **Score Combination**: Weighted fusion of multiple signals
+### **Multi-Agent RAG Pipeline**
+1. **Query Understanding Agent**: Entity extraction and query structuring
+2. **Semantic Retrieval Agent**: Document retrieval with relevance scoring
+3. **Decision Reasoning Agent**: AI-powered decision making
+4. **Explainability Agent**: Audit trails and clause mappings
 
-### **Local LLM Configuration**
-```python
-# Enable local inference
-USE_LOCAL_LLM = "1"
-
-# Model specifications
-LOCAL_MODEL_NAME = "TheBloke/Mistral-7B-Instruct-v0.2-GPTQ"
-MAX_NEW_TOKENS = 256
-TEMPERATURE = 0.0
-TOP_P = 0.1
-```
+### **Intelligent Processing**
+- **Dynamic Chunking**: Adaptive chunk size based on document length
+- **Context Windowing**: Smart excerpt selection around query terms
+- **Retrieval Caching**: Performance optimization for repeated queries
+- **Background Ingestion**: Async document processing
 
 ## 🔧 Development Setup
 
 ### Prerequisites
-- **Python**: 3.8+ with CUDA support (optional)
+- **Python**: 3.8+
 - **Node.js**: 16+
-- **Google Gemini API Key**: Required for fallback
-- **GPU Memory**: 8GB+ for local LLM (optional)
+- **Google Gemini API Key**: Required for AI processing
 
 ### Quick Start
 
@@ -177,7 +119,7 @@ pip install -r requirements.txt
 
 # Set environment variables
 export GOOGLE_API_KEY="your_gemini_api_key"
-export USE_LOCAL_LLM="0"  # Set to "1" for local LLM
+export ENVIRONMENT="development"
 
 # Run the server
 python app.py
@@ -208,7 +150,6 @@ python test_system.py
 GOOGLE_API_KEY=your_gemini_api_key
 
 # Optional
-USE_LOCAL_LLM=0                    # 1 for local Mistral-7B, 0 for Gemini
 ENVIRONMENT=development
 HOST=0.0.0.0
 PORT=8000
@@ -216,22 +157,7 @@ PORT=8000
 
 ## 🚀 API Usage
 
-### Main Claims Processing Endpoint
-```bash
-curl -X POST "http://localhost:8000/api/v1/hackrx/run" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer e5ce99a2d77266e7beac16ad120c57c64a4da3167201e2327b1837f06b4cad0b" \
-  -d '{
-    "documents": "https://example.com/policy.pdf",
-    "questions": [
-      "What is the waiting period?",
-      "What is room rent limit?",
-      "Is maternity covered?"
-    ]
-  }'
-```
-
-### Standard Query Endpoint
+### Main Query Endpoint
 ```bash
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
@@ -240,10 +166,35 @@ curl -X POST "http://localhost:8000/query" \
   }'
 ```
 
-### Document Upload
+### Document Upload (File)
 ```bash
 curl -X POST "http://localhost:8000/upload-document" \
   -F "file=@policy.pdf"
+```
+
+### Document Upload (URL)
+```bash
+curl -X POST "http://localhost:8000/upload-document-url" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/policy.pdf",
+    "async_mode": false
+  }'
+```
+
+### System Endpoints
+```bash
+# Health check
+GET /health
+
+# System statistics
+GET /system-stats
+
+# List documents
+GET /documents
+
+# Test Gemini connection
+GET /test-gemini
 ```
 
 ## 🧪 Testing & Validation
@@ -267,16 +218,12 @@ import requests
 import time
 
 start = time.time()
-response = requests.post('http://localhost:8000/api/v1/hackrx/run', 
-  headers={'Authorization': 'Bearer e5ce99a2d77266e7beac16ad120c57c64a4da3167201e2327b1837f06b4cad0b'},
-  json={
-    'documents': 'https://example.com/sample.pdf',
-    'questions': ['What is covered?', 'What are exclusions?']
-  }
+response = requests.post('http://localhost:8000/query', 
+  json={'query': 'What is covered in this policy?'}
 )
 print(f'Response time: {time.time() - start:.2f}s')
 print(f'Status: {response.status_code}')
-print(f'Answers: {response.json()}')
+print(f'Decision: {response.json()}')
 "
 ```
 
@@ -310,7 +257,7 @@ pip install -r requirements.txt
 
 # Set production environment
 export ENVIRONMENT=production
-export USE_LOCAL_LLM=0  # Use Gemini for production
+export GOOGLE_API_KEY="your_production_key"
 
 # Run with uvicorn
 uvicorn backend.app:app --host 0.0.0.0 --port 8000 --workers 4
@@ -332,11 +279,11 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ## 🔐 Security Features
 
-- **API Key Authentication**: Bearer token validation
+- **API Key Authentication**: Gemini API key validation
 - **Input Sanitization**: Document type and size validation
-- **Rate Limiting**: Built-in request throttling
 - **Secure File Handling**: Temporary file cleanup
 - **Error Masking**: Production-safe error messages
+- **CORS Configuration**: Configurable cross-origin settings
 
 ## 🤝 Contributing
 
@@ -355,49 +302,13 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ## 📚 Documentation
 
-- [API Documentation](http://localhost:8000/docs)
-- [Deployment Guide](DEPLOYMENT.md)
-- [Architecture Overview](docs/architecture.md)
-- [User Guide](docs/user-guide.md)
-
-## 🆘 Support
-
-### Getting Help
-1. Check the [troubleshooting guide](docs/troubleshooting.md)
-2. Review system logs for errors
-3. Run the test suite to identify issues
-4. Create an issue in the repository
-
-### Contact
-- **Technical Issues**: GitHub Issues
-- **Feature Requests**: GitHub Discussions
-- **Security Issues**: Private repository issues
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
+- **Configuration**: See `backend/config.py` for all settings
 
 ## 🆘 Troubleshooting
 
 ### Common Issues
-
-#### Local LLM Not Loading
-```bash
-# Check GPU memory
-nvidia-smi
-
-# Verify model download
-python -c "from transformers import AutoTokenizer; AutoTokenizer.from_pretrained('TheBloke/Mistral-7B-Instruct-v0.2-GPTQ')"
-```
-
-#### CUDA Out of Memory
-```bash
-# Reduce batch size in app.py
-BATCH_SIZE = 3  # Default is 5
-
-# Use CPU fallback
-export CUDA_VISIBLE_DEVICES=""
-```
 
 #### Gemini API Errors
 ```bash
@@ -408,17 +319,28 @@ echo $GOOGLE_API_KEY
 curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_API_KEY"
 ```
 
-## 🙏 Acknowledgments
+#### Document Processing Issues
+```bash
+# Check file permissions
+ls -la backend/uploads/
 
-- **Google Gemini AI**: Primary language model
-- **Mistral AI**: Local inference capabilities
-- **LangChain**: RAG framework foundation
-- **FAISS**: Vector similarity search
-- **FastAPI**: High-performance backend
-- **React + Tailwind**: Modern frontend framework
+# Verify document format
+file your_document.pdf
+```
+
+#### Vector Store Issues
+```bash
+# Check ChromaDB status
+ls -la backend/chroma_db/
+
+# Clear cache if needed
+rm -rf backend/chroma_db/
+```
+
+
 
 ---
 
-**🚀 Ready to revolutionize insurance claims processing? Start with the quick setup above and experience the power of hybrid AI!**
+**🚀 Ready to revolutionize insurance claims processing? Start with the quick setup above and experience the power of AI-driven decision making!**
 
 *For questions and support, check the troubleshooting section or create a GitHub issue.* 
