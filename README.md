@@ -300,10 +300,7 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 - Write comprehensive documentation
 - Include unit tests for all new features
 
-## 📚 Documentation
 
-- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
 - **Configuration**: See `backend/config.py` for all settings
 
 ## 🆘 Troubleshooting
