@@ -4,9 +4,8 @@ uvicorn==0.29.0
 python-dotenv==1.0.1
 requests==2.32.3
 
-# Document processing
+# Document processing (pure Python, no Rust dependencies)
 python-docx==1.1.0
-PyMuPDF==1.24.2
 PyPDF2==3.0.1
 
 # AI/ML dependencies (Python 3.11 compatible)
@@ -21,5 +20,5 @@ google-generativeai==0.5.0
 # Vector database
 chromadb==0.5.5
 
-# Note: Removed pinecone-client, sentence-transformers, and pinecone-text
-# as they're not compatible with Python 3.13 and not used in current code
+# Note: Removed PyMuPDF (Rust dependency) and other problematic packages
+# PyPDF2 provides PDF processing without compilation issues
