@@ -17,9 +17,19 @@ pip install --upgrade pip
 echo "🔧 Installing all dependencies from requirements.txt..."
 pip install --no-cache-dir --prefer-binary -r requirements.txt
 
+# Explicitly install sentence-transformers if it failed
+echo "🔧 Ensuring sentence-transformers is installed..."
+pip install --no-cache-dir --prefer-binary sentence-transformers>=2.2.0,<3.0.0 || {
+    echo "⚠️ sentence-transformers installation failed, trying alternative method..."
+    pip install --no-cache-dir --prefer-binary --force-reinstall sentence-transformers
+}
+
 # Verify the installation
 echo "🔍 Verifying package installations..."
-pip list | grep -E "(sentence-transformers|langchain|chromadb)"
+echo "📦 Installed packages:"
+pip list | grep -E "(sentence-transformers|langchain|chromadb)" || echo "⚠️ Some packages not found in pip list"
+echo "🔍 Full package list:"
+pip list
 
 # If any packages fail, try alternative installation methods
 echo "🔄 Checking for any failed installations..."
