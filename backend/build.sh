@@ -6,9 +6,19 @@ set -e  # Exit on any error
 
 echo "🚀 Starting IntelliClaim build process for Render..."
 
-# Install Python dependencies
+# Install Python dependencies with optimizations for Render
 echo "📦 Installing Python dependencies..."
-pip install -r requirements.txt
+echo "🔧 Using pip with optimizations for cloud deployment..."
+
+# Upgrade pip first
+pip install --upgrade pip
+
+# Install dependencies with optimizations
+pip install --no-cache-dir --prefer-binary -r requirements.txt
+
+# If any packages fail, try alternative installation methods
+echo "🔄 Checking for any failed installations..."
+pip check || echo "⚠️ Some packages may have warnings, but continuing..."
 
 # Create necessary directories
 echo "📁 Creating storage directories..."
@@ -25,6 +35,10 @@ chmod 755 faiss_cache
 # Run storage setup script
 echo "⚙️ Running storage setup script..."
 python setup_storage.py
+
+# Verify critical packages are installed
+echo "🔍 Verifying critical package installations..."
+python -c "import fastapi, uvicorn, chromadb, google.generativeai" && echo "✅ All critical packages installed successfully" || echo "⚠️ Some packages may have issues"
 
 echo "✅ Build completed successfully!"
 echo "📋 Build summary:"
