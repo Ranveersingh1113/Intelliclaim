@@ -10,10 +10,10 @@ class Config:
     API_TITLE = "IntelliClaim RAG API"
     API_VERSION = "1.0.0"
     API_HOST = "0.0.0.0"
-    API_PORT = 8000
+    # API_PORT is now handled by the PORT environment variable (see below)
     
     # Model Configuration
-    EMBEDDING_MODEL = "BAAI/bge-m3"
+    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # Lightweight, 384d, 80MB
     LLM_MODEL = "openai/gpt-5-2025-08-07"  # Hackathon requirement
     
     # Document Processing
