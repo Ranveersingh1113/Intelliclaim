@@ -1,6 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd backend && chmod +x railway_build.sh && ./railway_build.sh"
 
 [deploy]
 startCommand = "cd backend && python setup_storage.py && uvicorn app:app --host 0.0.0.0 --port $PORT"
