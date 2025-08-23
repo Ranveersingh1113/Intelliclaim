@@ -25,7 +25,7 @@ echo "📄 Installing document processing..."
 pip install python-docx==1.1.0 PyPDF2==3.0.1
 
 echo "🤖 Installing AI/ML dependencies..."
-pip install langchain==0.2.0 langchain-community==0.2.0 langgraph==0.2.21 pydantic==2.7.1
+pip install langchain==0.2.0 langchain-community==0.2.0 langgraph==0.2.21 "pydantic>=2.8.0"
 
 echo "🔑 Installing Google Gemini..."
 pip install google-generativeai==0.5.0
