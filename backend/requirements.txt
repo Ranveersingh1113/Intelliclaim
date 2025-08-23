@@ -1,6 +1,9 @@
+# Railway-optimized requirements for IntelliClaim backend
+# Lighter versions that build faster on Railway
+
 # Core FastAPI dependencies
 fastapi==0.111.0
-uvicorn==0.29.0
+uvicorn[standard]==0.29.0
 python-dotenv==1.0.1
 requests==2.32.3
 
@@ -8,20 +11,20 @@ requests==2.32.3
 python-docx==1.1.0
 PyPDF2==3.0.1
 
-# AI/ML dependencies (Python 3.13 compatible)
+# AI/ML dependencies (lighter versions for Railway)
 langchain==0.2.0
 langchain-community==0.2.0
 langgraph==0.2.21
-pydantic>=2.8.0  # Use newer version with pre-compiled wheels
+pydantic>=2.8.0
 
 # AI APIs
 google-generativeai==0.5.0
 
-# Vector database
+# Vector database (lighter version)
 chromadb==0.5.5
 
-# Lightweight embedding models
-sentence-transformers>=2.2.0,<3.0.0  # Lightweight HuggingFace embeddings
+# Lightweight embedding models (faster to install)
+sentence-transformers==2.2.2
 
-# Note: Removed PyMuPDF (Rust dependency) and other problematic packages
-# PyPDF2 provides PDF processing without compilation issues
+# Additional dependencies for Railway
+gunicorn==21.2.0
