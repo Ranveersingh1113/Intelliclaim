@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 import PyPDF2
-import fitz  # PyMuPDF
+# import fitz  # PyMuPDF - Removed due to Rust compilation issues on Render
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -167,22 +167,19 @@ class DocumentProcessor:
         try:
             raw_text = ""
             if ext == '.pdf':
-                # Prefer fast extraction via PyMuPDF; fallback to PyPDF2
+                # Use PyPDF2 for PDF processing (PyMuPDF removed due to Rust compilation issues)
                 try:
-                    with fitz.open(file_path) as doc:
-                        parts: List[str] = []
-                        for page in doc:
-                            text = page.get_text("text")
-                            if text and text.strip():
-                                parts.append(text)
-                        raw_text = "\n\n".join(parts)
-                except Exception:
                     with open(file_path, 'rb') as file:
                         pdf_reader = PyPDF2.PdfReader(file)
+                        parts: List[str] = []
                         for page in pdf_reader.pages:
                             t = page.extract_text()
-                            if t:
-                                raw_text += t + "\n\n"
+                            if t and t.strip():
+                                parts.append(t)
+                        raw_text = "\n\n".join(parts)
+                except Exception as e:
+                    logger.error(f"PDF processing failed: {e}")
+                    raw_text = ""
             elif ext == '.docx':
                 doc = DocxDocument(file_path)
                 raw_text = "\n\n".join(p.text for p in doc.paragraphs if p.text.strip())
@@ -354,11 +351,8 @@ class SemanticRetrievalAgent:
 class DecisionReasoningAgent:
     def __init__(self, llm_client):
         self.llm = llm_client
-    def _make_decision_fallback(self, structured_query: dict, docs: list, original_query: str) -> dict:
-        age = structured_query.get('age')
-        procedure = structured_query.get('procedure')
-        policy_duration = structured_query.get('policy_duration_months', 1)
-       
+    async def _make_decision_fallback(self, structured_query: dict, docs: list, original_query: str) -> dict:
+        """AI-powered fallback decision making using policy extraction and LLM reasoning"""
         if not docs:
             return {
                 "decision": "PENDING",
@@ -366,8 +360,231 @@ class DecisionReasoningAgent:
                 "amount": None,
                 "confidence_score": 20
             }
-       
-        # If we have documents but can't make a clear decision, default to PENDING
+        
+        try:
+            # Extract policy rules from documents using AI
+            policy_rules = self._extract_policy_rules_ai(docs, structured_query)
+            
+            # Use AI to make decision based on extracted rules
+            decision = await self._make_ai_decision(structured_query, policy_rules, original_query)
+            return decision
+            
+        except Exception as e:
+            logger.error(f"AI decision making failed: {e}")
+            # Fall back to basic rule-based logic if AI fails
+            return self._apply_basic_rules(structured_query, docs)
+    
+    def _extract_policy_rules_ai(self, docs: list, structured_query: dict) -> dict:
+        """Extract policy rules from documents using AI analysis"""
+        try:
+            # Combine relevant document content
+            policy_text = "\n\n".join([doc.page_content for doc in docs[:3]])  # Use top 3 docs
+            
+            # Create prompt for policy rule extraction
+            extraction_prompt = f"""
+            You are an expert insurance policy analyst. Extract key policy rules and coverage information from the following policy document.
+            
+            Query Context: {structured_query}
+            
+            Policy Document:
+            {policy_text[:3000]}  # Limit text length
+            
+            Extract and return ONLY a JSON object with these fields:
+            {{
+                "waiting_periods": {{
+                    "major_surgery": "number of months",
+                    "minor_procedure": "number of months",
+                    "preventive_care": "number of months"
+                }},
+                "coverage_limits": {{
+                    "room_rent": "amount or 'as_per_policy'",
+                    "icu": "amount or 'as_per_policy'",
+                    "surgery": "amount or 'as_per_policy'",
+                    "general_coverage": "overall policy limit"
+                }},
+                "exclusions": ["list of excluded procedures or conditions"],
+                "special_benefits": ["list of special benefits or riders"],
+                "procedure_specific_coverage": {{
+                    "major_surgery": "amount if specified",
+                    "minor_procedure": "amount if specified"
+                }}
+            }}
+            
+            Important:
+            - Extract actual amounts in the policy's currency format
+            - Look for procedure-specific coverage amounts
+            - If information is not found, use "not_specified" for that field
+            - Focus on amounts relevant to the query context
+            """
+            
+            # Use LLM to extract rules
+            response = self.llm.generate_content(extraction_prompt)
+            rules_text = response.text.strip()
+            
+            # Parse JSON response
+            try:
+                # Clean the response to extract JSON
+                json_match = re.search(r'\{.*\}', rules_text, re.DOTALL)
+                if json_match:
+                    rules = json.loads(json_match.group(0))
+                    logger.info(f"Extracted policy rules: {rules}")
+                    return rules
+                else:
+                    raise ValueError("No JSON found in response")
+            except Exception as parse_error:
+                logger.error(f"Failed to parse policy rules JSON: {parse_error}")
+                return self._extract_policy_rules_fallback(docs)
+                
+        except Exception as e:
+            logger.error(f"AI policy rule extraction failed: {e}")
+            return self._extract_policy_rules_fallback(docs)
+    
+    def _extract_policy_rules_fallback(self, docs: list) -> dict:
+        """Fallback method to extract basic policy rules using regex patterns"""
+        rules = {
+            "waiting_periods": {"major_surgery": "not_specified", "minor_procedure": "not_specified", "preventive_care": "not_specified"},
+            "coverage_limits": {"room_rent": "as_per_policy", "icu": "as_per_policy", "surgery": "as_per_policy", "general_coverage": "as_per_policy"},
+            "exclusions": [],
+            "special_benefits": []
+        }
+        
+        combined_text = " ".join([doc.page_content.lower() for doc in docs])
+        
+        # Extract waiting periods using regex
+        waiting_match = re.search(r'waiting\s+period.*?(\d+)\s*(?:month|year)', combined_text)
+        if waiting_match:
+            rules["waiting_periods"]["major_surgery"] = int(waiting_match.group(1))
+            rules["waiting_periods"]["minor_procedure"] = int(waiting_match.group(1))
+        
+        # Extract coverage amounts with generic patterns
+        amount_patterns = [
+            (r'room\s+rent.*?(\d+(?:,\d+)*)', 'room_rent'),
+            (r'icu.*?(\d+(?:,\d+)*)', 'icu'),
+            (r'surgery.*?(\d+(?:,\d+)*)', 'surgery'),
+            (r'coverage.*?(\d+(?:,\d+)*)', 'general_coverage'),
+            (r'limit.*?(\d+(?:,\d+)*)', 'general_coverage'),
+            (r'(\d+(?:,\d+)*)\s*(?:rs|rupees?|₹|dollars?|\$|euros?|€)', 'general_coverage')
+        ]
+        
+        for pattern, key in amount_patterns:
+            match = re.search(pattern, combined_text)
+            if match:
+                amount_str = match.group(1).replace(',', '')
+                try:
+                    amount = int(amount_str)
+                    if key not in rules["coverage_limits"] or rules["coverage_limits"][key] == "as_per_policy":
+                        rules["coverage_limits"][key] = amount
+                except ValueError:
+                    pass
+        
+        return rules
+    
+    async def _make_ai_decision(self, structured_query: dict, policy_rules: dict, original_query: str) -> dict:
+        """Use AI to make decision based on extracted policy rules"""
+        try:
+            # Create decision prompt
+            decision_prompt = f"""
+            You are an expert insurance claims adjudicator. Based on the query and policy rules, make a decision.
+            
+            QUERY: {original_query}
+            STRUCTURED INFO: {json.dumps(structured_query, indent=2)}
+            POLICY RULES: {json.dumps(policy_rules, indent=2)}
+            
+            Respond ONLY with a JSON object with these exact keys:
+            {{
+                "decision": "APPROVED|REJECTED|PENDING",
+                "justification": "detailed explanation of decision",
+                "amount": "specific amount in rupees (e.g., 50000) or null if not specified",
+                "confidence_score": "number between 0-100"
+            }}
+            
+            Decision Guidelines:
+            - APPROVED: If claim meets all policy requirements
+            - REJECTED: If claim clearly violates policy rules
+            - PENDING: If more information is needed
+            
+            Amount Guidelines:
+            - If policy specifies coverage amount, use that exact amount
+            - If policy has sub-limits, use the applicable limit
+            - If amount is not specified, use null
+            - Extract amounts in the policy's currency format
+            
+            Base your decision on the actual policy rules provided, not on assumptions.
+            """
+            
+            # Get AI decision
+            response = await self.llm.generate_content_async(decision_prompt)
+            decision_text = response.text.strip()
+            
+            # Parse decision response
+            try:
+                json_match = re.search(r'\{.*\}', decision_text, re.DOTALL)
+                if json_match:
+                    decision = json.loads(json_match.group(0))
+                    
+                    # Validate decision format
+                    required_keys = ["decision", "justification", "amount", "confidence_score"]
+                    if all(key in decision for key in required_keys):
+                        # Normalize decision values
+                        decision["decision"] = self._normalize_decision(decision["decision"])
+                        decision["confidence_score"] = min(100, max(0, int(decision.get("confidence_score", 50))))
+                        
+                        # Process amount field
+                        original_amount = decision.get("amount")
+                        decision["amount"] = self._process_amount_field(original_amount, policy_rules)
+                        
+                        logger.info(f"AI decision: {decision}")
+                        logger.info(f"Amount processing: '{original_amount}' -> {decision['amount']}")
+                        return decision
+                    else:
+                        raise ValueError("Missing required decision fields")
+                else:
+                    raise ValueError("No JSON found in decision response")
+                    
+            except Exception as parse_error:
+                logger.error(f"Failed to parse AI decision: {parse_error}")
+                raise
+                
+        except Exception as e:
+            logger.error(f"AI decision making failed: {e}")
+            raise
+    
+    def _process_amount_field(self, amount_value, policy_rules: dict):
+        """Process and validate the amount field from AI decision"""
+        try:
+            # If AI provided a valid amount, use it
+            if amount_value and amount_value != "null" and str(amount_value).lower() != "pending":
+                # Try to convert to integer
+                if isinstance(amount_value, str):
+                    # Remove common currency symbols and convert
+                    clean_amount = re.sub(r'[₹,rs\s$€£¥]', '', str(amount_value))
+                    if clean_amount.isdigit():
+                        return int(clean_amount)
+                elif isinstance(amount_value, (int, float)):
+                    return int(amount_value)
+            
+            # If no valid amount, try to extract from policy rules
+            if policy_rules and "coverage_limits" in policy_rules:
+                coverage = policy_rules["coverage_limits"]
+                
+                # Look for general coverage first, then specific types
+                for key in ["general_coverage", "surgery", "room_rent", "icu"]:
+                    if key in coverage and coverage[key] != "as_per_policy":
+                        return coverage[key]
+            
+            # Default to null if no amount found
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error processing amount field: {e}")
+            return None
+    
+    def _apply_basic_rules(self, structured_query: dict, docs: list) -> dict:
+        """Basic rule-based fallback when AI fails completely"""
+        age = structured_query.get('age')
+        procedure = structured_query.get('procedure')
+        policy_duration = structured_query.get('policy_duration_months', 1)
+        
         if not procedure:
             return {
                 "decision": "PENDING",
@@ -375,38 +592,22 @@ class DecisionReasoningAgent:
                 "amount": None,
                 "confidence_score": 30
             }
-       
-        # Decision logic based on policy duration and procedure type
+        
+        # Simple logic based on policy duration
         if policy_duration < 3:
-            if procedure in ['surgery', 'operation', 'heart', 'knee']:
-                return {
-                    "decision": "REJECTED",
-                    "justification": f"Policy is only {policy_duration} month(s) old. Major procedures like {procedure} require a minimum 3-month waiting period.",
-                    "amount": None,
-                    "confidence_score": 85
-                }
-            else:
-                return {
-                    "decision": "APPROVED",
-                    "justification": f"Minor procedure '{procedure}' approved for {policy_duration} month(s) old policy.",
-                    "amount": 5000.0,
-                    "confidence_score": 75
-                }
+            return {
+                "decision": "PENDING",
+                "justification": f"Policy is only {policy_duration} month(s) old. Please check waiting period requirements.",
+                "amount": None,
+                "confidence_score": 40
+            }
         else:
-            if age and age > 60:
-                return {
-                    "decision": "APPROVED",
-                    "justification": f"Policy is {policy_duration} month(s) old and patient is {age} years old. Procedure '{procedure}' approved with senior citizen benefits.",
-                    "amount": 15000.0,
-                    "confidence_score": 90
-                }
-            else:
-                return {
-                    "decision": "APPROVED",
-                    "justification": f"Policy is {policy_duration} month(s) old. Procedure '{procedure}' approved.",
-                    "amount": 10000.0,
-                    "confidence_score": 85
-                }
+            return {
+                "decision": "PENDING",
+                "justification": f"Policy duration ({policy_duration} months) appears sufficient, but specific coverage details needed.",
+                "amount": None,
+                "confidence_score": 60
+            }
     def _build_reasoning_prompt(self, structured_query: Dict, docs: List[Document], original_query: str) -> str:
         windows: List[str] = []
         remaining = MAX_CONTEXT_CHARS
@@ -473,7 +674,7 @@ DECISION (JSON format):
             logger.info(f"Decision: {decision}")
         except Exception as e:
             logger.error(f"Decision reasoning failed: {e}")
-            context.decision = self._make_decision_fallback(context.structured_query, context.retrieved_docs, context.original_query)
+            context.decision = await self._make_decision_fallback(context.structured_query, context.retrieved_docs, context.original_query)
             logger.info(f"Using fallback decision: {context.decision}")
         return context
 
