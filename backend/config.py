@@ -3,7 +3,7 @@ Configuration settings for IntelliClaim system
 """
 
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 class Config:
     # API Configuration
@@ -14,16 +14,17 @@ class Config:
     
     # Model Configuration
     EMBEDDING_MODEL = "BAAI/bge-m3"
-    LLM_MODEL = "gemini-1.5-flash"
+    LLM_MODEL = "openai/gpt-5-2025-08-07"  # Hackathon requirement
     
     # Document Processing
     CHUNK_SIZE = 2000
     CHUNK_OVERLAP = 100
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
     
-    # Vector Store
-    VECTOR_STORE_PATH = "./chroma_db"
-    UPLOAD_PATH = "./uploads"
+    # Vector Store - Updated for Render compatibility
+    VECTOR_STORE_PATH = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
+    UPLOAD_PATH = os.getenv("UPLOAD_DIR", "./uploads")
+    FAISS_CACHE_PATH = os.getenv("FAISS_CACHE_DIR", "./faiss_cache")
     
     # Retrieval Settings
     TOP_K_DOCUMENTS = 5
@@ -47,6 +48,13 @@ class Config:
     ENABLE_AUDIT_TRAIL = True
     ENABLE_EXPLAINABILITY = True
     
+    # Render-specific configuration
+    RENDER_DEPLOYMENT = os.getenv("RENDER", "false").lower() == "true"
+    PORT = int(os.getenv("PORT", 8000))  # Render uses $PORT environment variable
+    
+    # File type restrictions
+    ALLOWED_FILE_TYPES = [".pdf", ".docx", ".txt", ".doc"]
+    
     @classmethod
     def get_model_config(cls) -> Dict[str, Any]:
         return {
@@ -64,7 +72,18 @@ class Config:
             "title": cls.API_TITLE,
             "version": cls.API_VERSION,
             "host": cls.API_HOST,
-            "port": cls.API_PORT
+            "port": cls.PORT
+        }
+    
+    @classmethod
+    def get_storage_config(cls) -> Dict[str, Any]:
+        return {
+            "chroma_persist_directory": cls.VECTOR_STORE_PATH,
+            "upload_directory": cls.UPLOAD_PATH,
+            "faiss_cache_directory": cls.FAISS_CACHE_PATH,
+            "max_file_size": cls.MAX_FILE_SIZE,
+            "allowed_file_types": cls.ALLOWED_FILE_TYPES,
+            "render_deployment": cls.RENDER_DEPLOYMENT
         }
 
 class DevelopmentConfig(Config):
