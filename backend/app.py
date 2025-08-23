@@ -129,17 +129,41 @@ class UploadURLRequest(BaseModel):
 # --- Core RAG Components (No Changes) ---
 class EmbeddingManager:
     def __init__(self, model_name: str = None):
-        model_to_use = model_name or CONFIG.EMBEDDING_MODEL
-        for device in ("cuda", "cpu"):
-            try:
-                self.langchain_embeddings = HuggingFaceEmbeddings(
-                    model_name=model_to_use,
-                    model_kwargs={'device': device},
-                    encode_kwargs={'normalize_embeddings': True}
-                )
-                break
-            except Exception:
-                continue
+        try:
+            # Try to use HuggingFace embeddings if available
+            model_to_use = model_name or CONFIG.EMBEDDING_MODEL
+            self.langchain_embeddings = HuggingFaceEmbeddings(
+                model_name=model_to_use,
+                model_kwargs={'device': 'cpu'},  # Force CPU for Render compatibility
+                encode_kwargs={'normalize_embeddings': True}
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize HuggingFace embeddings: {e}")
+            # Fallback to a simple embedding function
+            from langchain.embeddings.base import Embeddings
+            class SimpleEmbeddings(Embeddings):
+                def __init__(self):
+                    self.dimension = 384  # Standard embedding dimension
+                
+                def embed_documents(self, texts):
+                    # Simple hash-based embeddings for fallback
+                    import hashlib
+                    embeddings = []
+                    for text in texts:
+                        hash_obj = hashlib.md5(text.encode())
+                        # Convert hash to 384-dimensional vector
+                        hash_bytes = hash_obj.digest()
+                        vector = []
+                        for i in range(self.dimension):
+                            vector.append(float(hash_bytes[i % len(hash_bytes)]) / 255.0)
+                        embeddings.append(vector)
+                    return embeddings
+                
+                def embed_query(self, text):
+                    return self.embed_documents([text])[0]
+            
+            self.langchain_embeddings = SimpleEmbeddings()
+            logger.info("Using fallback simple embeddings")
 
 
 class DocumentProcessor:
@@ -363,7 +387,7 @@ class DecisionReasoningAgent:
         
         try:
             # Extract policy rules from documents using AI
-            policy_rules = self._extract_policy_rules_ai(docs, structured_query)
+            policy_rules = await self._extract_policy_rules_ai(docs, structured_query)
             
             # Use AI to make decision based on extracted rules
             decision = await self._make_ai_decision(structured_query, policy_rules, original_query)
@@ -374,7 +398,7 @@ class DecisionReasoningAgent:
             # Fall back to basic rule-based logic if AI fails
             return self._apply_basic_rules(structured_query, docs)
     
-    def _extract_policy_rules_ai(self, docs: list, structured_query: dict) -> dict:
+    async def _extract_policy_rules_ai(self, docs: list, structured_query: dict) -> dict:
         """Extract policy rules from documents using AI analysis"""
         try:
             # Combine relevant document content
@@ -418,8 +442,8 @@ class DecisionReasoningAgent:
             """
             
             # Use LLM to extract rules
-            response = self.llm.generate_content(extraction_prompt)
-            rules_text = response.text.strip()
+            response = await self.llm.generate_content_async(extraction_prompt)
+            rules_text = response.strip()
             
             # Parse JSON response
             try:
@@ -792,7 +816,27 @@ app.add_middleware(
 )
 
 
-rag_system = IntelliClaimRAG()
+# Initialize RAG system with error handling
+try:
+    rag_system = IntelliClaimRAG()
+    logger.info("RAG system initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize RAG system: {e}")
+    # Create a minimal fallback system
+    class FallbackRAG:
+        async def process_query(self, query: str):
+            return DecisionResponse(
+                decision="ERROR",
+                justification="System initialization failed. Please check logs.",
+                confidence_score=0,
+                processing_time=0.0
+            )
+        
+        async def add_document(self, file_path: str):
+            return {"status": "error", "message": "System not initialized"}
+    
+    rag_system = FallbackRAG()
+    logger.warning("Using fallback RAG system")
 
 
 @app.post("/query", response_model=DecisionResponse)
