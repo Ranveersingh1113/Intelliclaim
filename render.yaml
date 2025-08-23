@@ -4,7 +4,7 @@ services:
     env: python
     plan: starter
     region: oregon  # You can change this to your preferred region
-    pythonVersion: 3.11
+    pythonVersion: 3.13
     buildCommand: |
       cd backend
       chmod +x build.sh
